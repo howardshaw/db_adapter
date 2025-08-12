@@ -1,0 +1,126 @@
+site_name: DB Adapter Documentation
+site_description: A flexible database adapter with async/sync support
+site_author: DB Adapter Contributors
+site_url: https://db-adapter.readthedocs.io
+
+repo_name: yourusername/db-adapter
+repo_url: https://github.com/yourusername/db-adapter
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - meta
+  - pymdownx.arithmatex:
+      mathjax: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:materialx.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        case: lower
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - toc:
+      anchorlink: true
+      permalink: true
+      title: On this page
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - minify:
+      minify_html: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername/db-adapter
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/yourusername
+  version:
+    provider: mike
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
+    - Configuration: getting-started/configuration.md
+  - User Guide:
+    - API Reference: user-guide/api-reference.md
+    - Database Support: user-guide/database-support.md
+    - Async vs Sync: user-guide/async-vs-sync.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+    - Code Style: development/code-style.md
+  - Deployment:
+    - Docker: deployment/docker.md
+    - Production: deployment/production.md
+  - API:
+    - OpenAPI: api/openapi.md
+    - Endpoints: api/endpoints.md
+  - Changelog: changelog.md
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js 

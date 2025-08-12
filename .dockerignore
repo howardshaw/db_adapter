@@ -1,0 +1,79 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Development files
+.env
+.env.*
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Linting and formatting
+.flake8
+.mypy.ini
+pyproject.toml
+setup.cfg
+setup.py
+
+# Performance
+performance_results.json 

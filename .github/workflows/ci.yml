@@ -1,0 +1,181 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11, 3.12]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      run: |
+        pip install uv
+
+    - name: Cache uv dependencies
+      uses: actions/cache@v3
+      with:
+        path: .uv
+        key: ${{ runner.os }}-uv-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-${{ matrix.python-version }}-
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
+    - name: Run linting
+      run: |
+        uv run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        uv run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+
+    - name: Check code formatting
+      run: |
+        uv run black . --check
+        uv run isort . --check-only
+
+    - name: Run type checking
+      run: |
+        uv run mypy .
+
+    - name: Run tests
+      run: |
+        uv run pytest tests/ --cov=. --cov-report=html --cov-report=term-missing --cov-report=xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  security:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install uv
+      run: |
+        pip install uv
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
+    - name: Run security checks
+      run: |
+        uv run bandit -r . -f json -o bandit-report.json
+        uv run safety check
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: |
+        docker build -t db-adapter .
+
+    - name: Test Docker image
+      run: |
+        docker run --rm -d --name test-container -p 8000:8000 db-adapter
+        sleep 10
+        curl -f http://localhost:8000/health || exit 1
+        docker stop test-container
+
+  integration:
+    runs-on: ubuntu-latest
+    needs: test
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install uv
+      run: |
+        pip install uv
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
+    - name: Run integration tests
+      env:
+        USE_ASYNC_DB: false
+        REPO_DRIVER: sync_db
+        USE_ASYNC_ROUTER: false
+        DB_URL_SYNC: postgresql://postgres:postgres@localhost:5432/test_db
+        DB_URL_ASYNC: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        ECHO: false
+        POOL_SIZE: 5
+        MAX_OVERFLOW: 2
+        POOL_RECYCLE: 1800
+        POOL_TIMEOUT: 5
+      run: |
+        uv run pytest tests/ -m integration -v
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [test, security, docker, integration]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/db-adapter:latest .
+        docker push ${{ secrets.DOCKER_USERNAME }}/db-adapter:latest 

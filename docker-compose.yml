@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - USE_ASYNC_DB=true
+      - REPO_DRIVER=async_db
+      - USE_ASYNC_ROUTER=true
+      - DB_URL_ASYNC=sqlite+aiosqlite:///./example.db
+      - ECHO=false
+      - POOL_SIZE=10
+      - MAX_OVERFLOW=5
+      - POOL_RECYCLE=1800
+      - POOL_TIMEOUT=5
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # PostgreSQL service (uncomment to use PostgreSQL)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_DB: app
+  #     POSTGRES_USER: appuser
+  #     POSTGRES_PASSWORD: str0ng_passWord
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U appuser -d app"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # MySQL service (uncomment to use MySQL)
+  # mysql:
+  #   image: mysql:8.0
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: rootpassword
+  #     MYSQL_DATABASE: app
+  #     MYSQL_USER: appuser
+  #     MYSQL_PASSWORD: str0ng_passWord
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   ports:
+  #     - "3306:3306"
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+volumes:
+  postgres_data:
+  mysql_data: 

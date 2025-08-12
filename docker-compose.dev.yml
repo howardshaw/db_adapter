@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - USE_ASYNC_DB=true
+      - REPO_DRIVER=async_db
+      - USE_ASYNC_ROUTER=true
+      - DB_URL_ASYNC=sqlite+aiosqlite:///./example.db
+      - ECHO=true
+      - POOL_SIZE=5
+      - MAX_OVERFLOW=2
+      - POOL_RECYCLE=1800
+      - POOL_TIMEOUT=5
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - .:/app
+      - ./data:/app/data
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for development
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: app_dev
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: str0ng_passWord
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d app_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data: 
